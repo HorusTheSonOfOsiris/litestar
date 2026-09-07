@@ -6,6 +6,26 @@
 .. changelog:: 3.0.0
     :date: 2364-01-27
 
+    .. change:: Add hash-based storage strategy to ``RedisStore``
+        :type: feature
+        :pr: 5054
+        :issue: 4992
+        :breaking:
+
+        :class:`~litestar.stores.redis.RedisStore` gained a ``strategy`` parameter.
+        With ``strategy="hash"`` all values of a namespace are stored as fields of a single Redis
+        hash named after the namespace, using per-field expiration (requires Redis 7.4 or newer).
+        ``strategy="keys"`` keeps the previous ``<namespace>:<key>`` layout. ``delete_all`` on a
+        hash namespace unlinks the hash in one operation and only scans for child-namespace
+        hashes instead of every stored key.
+
+        The default (``strategy=None``) detects the server version on first use and selects
+        ``"hash"`` for Redis 7.4 and newer, ``"keys"`` otherwise. Data written in one layout
+        is not visible through the other; pass ``strategy="keys"`` to keep reading existing
+        ``<namespace>:<key>`` data. The ``"hash"`` strategy requires a namespace.
+
+        The minimum supported ``redis`` (redis-py) version is now ``5.0.8``.
+
     .. change:: Fix ``RedisStore.get`` truncating ``renew_for`` timedeltas of one day or more
         :type: bugfix
         :pr: 5053
