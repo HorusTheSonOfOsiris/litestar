@@ -50,6 +50,10 @@ until cursor == 0
 """
 
 
+def _to_seconds(value: int | timedelta) -> int:
+    return int(value.total_seconds()) if isinstance(value, timedelta) else value
+
+
 class _RedisStrategy(ABC):
     """Internal backend performing the actual Redis commands for :class:`RedisStore`."""
 
@@ -106,8 +110,7 @@ class _KeysStrategy(_RedisStrategy):
     async def get(self, key: str, renew_for: int | timedelta | None) -> bytes | None:
         redis_key = self._make_key(key)
         if renew_for:
-            if isinstance(renew_for, timedelta):
-                renew_for = renew_for.seconds
+            renew_for = _to_seconds(renew_for)
             data = await self._get_and_renew_script(keys=[redis_key], args=[renew_for])
             return cast("bytes | None", data)
         return await self._redis.get(redis_key)
